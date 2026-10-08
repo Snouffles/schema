@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <title>Veckoschema</title>
+    <!-- Bibliotek för att rendera HTML till Bild (PNG/JPEG) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* 1. Grundläggande stil */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            color: #000;
+            background-color: #f4f6f8;
+        }
+
+        /* 2. Kontroller & Filter */
+        .controls {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            border: 1px solid #000;
+        }
+        .filter-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #000;
+        }
+        select, button, input[type="file"] {
+            padding: 8px 12px;
+            border-radius: 0;
+            border: 1px solid #000;
+            font-size: 14px;
+        }
+        button { background-color: #2980b9; color: white; border: 1px solid #000; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #3498db; }
+        .btn-png { background-color: #27ae60; }
+        .btn-png:hover { background-color: #2ecc71; }
+        .btn-jpeg { background-color: #e67e22; }
+        .btn-jpeg:hover { background-color: #f39c12; }
+
+        /* 3. Kalenderns Layout */
+        .calendar-wrapper {
+            background: white;
+            border-radius: 0;
+            overflow-x: auto;
+            border: 2px solid #000;
+            min-width: 900px;
+            box-sizing: border-box;
+        }
+        
+        .cal-header {
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            border-bottom: 2px solid #000;
+        }
+        .single-grade-banner {
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: bold;
+            padding: 8px 0 4px 0;
+            background: transparent;
+            border: none;
+        }
+        .cal-header-cols {
+            display: flex;
+            width: 100%;
+        }
+        .time-corner {
+            width: 70px;
+            flex-shrink: 0;
+            border-right: 2px solid #000;
+            background: #fff;
+        }
+        .day-col-header {
+            flex: 1;
+            border-right: 2px solid #000;
+            display: flex;
+            flex-direction: column;
+        }
+        .day-col-header:last-child { border-right: none; }
+        .day-title {
+            text-align: center;
+            padding: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-bottom: 1px solid #000;
+            border-top: 1px solid #000;
+        }
+        
+        /* HÄR ÄR BAKGRUNDEN ÄNDRAD TILL VIT FÖR ÅRSKURS-RADEN */
+        .grades-row {
+            display: flex;
+            background: #ffffff;
+        }
+        .grade-title {
+            flex: 1;
+            text-align: center;
+            padding: 6px 0;
+            font-size: 0.9em;
+            color: #000;
+            border-right: 1px solid #000;
+            font-weight: bold;
+        }
+        .grade-title:last-child { border-right: none; }
+
+        .cal-body {
+            display: flex;
+            position: relative;
+        }
+        .cal-timeline {
+            width: 70px;
+            flex-shrink: 0;
+            position: relative;
+            border-right: 2px solid #000;
+            background: #ffffff;
+            z-index: 2;
+        }
+        
+        /* Streckmarkörer på tidslinjen */
+        .tick-line {
+            position: absolute;
+            right: 0;
+            height: 1px;
+            background-color: #000;
+            transform: translateY(-50%);
+            z-index: 5;
+        }
+        .tick-5 { width: 6px; }
+        .tick-15 { width: 12px; }
+        .tick-30 { width: 18px; }
+
+        .time-tick {
+            position: absolute;
+            right: 22px;
+            font-size: 0.8em;
+            color: #000;
+            font-weight: bold;
+            transform: translateY(-50%);
+            box-sizing: border-box;
+            background: #ffffff;
+            padding: 0 2px;
+            z-index: 10;
+            white-space: nowrap;
+        }
+        
+        .cal-days {
+            display: flex;
+            flex: 1;
+            position: relative;
+        }
+        .day-body-col {
+            flex: 1;
+            position: relative;
+            border-right: 2px solid #000;
+        }
+        .day-body-col:last-child { border-right: none; }
+
+        .hour-line {
+            position: absolute;
+            left: 0; right: 0;
+            height: 1px;
+            background-color: #000;
+            z-index: 1;
+        }
+        .grade-line {
+            position: absolute;
+            top: 0; bottom: 0;
+            width: 1px;
+            background-color: #000;
+            z-index: 1;
+        }
+
+        /* 4. Lektionsboxarna */
+        .lesson-box {
+            position: absolute;
+            border: 1px solid #000;
+            border-radius: 0;
+            box-sizing: border-box;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1px 2px;
+            overflow: hidden;
+            text-align: center;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        .subject-title { 
+            font-weight: bold; 
+            font-size: 0.68em; 
+            text-transform: uppercase; 
+            line-height: 1.1;
+            margin-bottom: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        .time-badge {
+            background: transparent;
+            color: #000;
+            font-size: 0.62em;
+            font-weight: bold;
+            padding: 0;
+            margin-bottom: 1px;
+            white-space: nowrap;
+        }
+
+        /* Korta lektioner (< 31 min): 50% mindre teckenstorlek */
+        .short-lesson { justify-content: center; padding: 1px; }
+        .short-lesson .subject-title { font-size: 0.3em; margin-bottom: 0; }
+        .short-lesson .time-badge { font-size: 0.27em; margin-bottom: 0; }
+
+        /* Alla årskurser: 50 % teckenstorlek vid överlappning (half-width) */
+        .lesson-box.half-width .subject-title { font-size: 0.3em; }
+        .lesson-box.half-width .time-badge { font-size: 0.27em; }
+        
+        /* Halv bredd + Kort lektion = Ytterligare 50% mindre */
+        .lesson-box.half-width.short-lesson .subject-title { font-size: 0.17em; }
+        .lesson-box.half-width.short-lesson .time-badge { font-size: 0.155em; }
+
+        /* Enskild årskursvy: Standardtypsnitt */
+        .single-grade-view .subject-title { font-size: 0.85em; }
+        .single-grade-view .time-badge { font-size: 0.72em; }
+        
+        /* Enskild årskursvy: Korta lektioner < 31 min (50% av standard) */
+        .single-grade-view .short-lesson .subject-title { font-size: 0.425em; }
+        .single-grade-view .short-lesson .time-badge { font-size: 0.36em; }
+
+        /* Enskild årskursvy: Extra korta lektioner < 16 min (-25% av kort lektion storlek) */
+        .extra-short-lesson .subject-title { font-size: 0.30em; }
+        .extra-short-lesson .time-badge { font-size: 0.20em; }
+
+        /* 5. Utskriftsinställningar för PDF */
+        @media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            html, body {
+                height: 100vh !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: hidden !important;
+                background: white;
+            }
+            .no-print { display: none !important; }
+            .calendar-wrapper { 
+                height: 98vh !important;
+                min-width: 0 !important;
+                width: 100% !important;
+                display: flex !important;
+                flex-direction: column !important;
+                border: 2px solid #000 !important;
+                box-sizing: border-box !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+            .cal-header {
+                flex-shrink: 0 !important;
+            }
+            .cal-body {
+                flex: 1 !important;
+                height: 100% !important;
+                overflow: hidden !important;
+            }
+            .cal-timeline, .cal-days {
+                height: 100% !important;
+            }
+            .day-title {
+                padding: 4px 0 !important;
+            }
+            .grade-title {
+                padding: 2px 0 !important;
+            }
+            @page { 
+                size: landscape; 
+                margin: 4mm; 
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="controls no-print">
+        <h2 style="margin-top: 0;">🗓️ Veckoschema</h2>
+        <input type="file" id="csvFileInput" accept=".csv" />
+        <button onclick="window.print()" style="margin-left: 10px;">🖨️ Skriv ut PDF (Med Färger)</button>
+        <button onclick="downloadImage('png')" class="btn-png" style="margin-left: 5px;">🖼️ Ladda ner PNG (A4 Anpassad)</button>
+        <button onclick="downloadImage('jpeg')" class="btn-jpeg" style="margin-left: 5px;">🖼️ Ladda ner JPEG (A4 Anpassad)</button>
+
+        <div class="filter-group">
+            <div>
+                <label>Årskurs: </label>
+                <select id="filterGrade" onchange="applyFilters()">
+                    <option value="">Alla Årskurser</option>
+                </select>
+            </div>
+            <div>
+                <label>Ämne: </label>
+                <select id="filterSubject" onchange="applyFilters()">
+                    <option value="">Alla Ämnen</option>
+                </select>
+            </div>
+            <div>
+                <label>Lärare: </label>
+                <select id="filterTeacher" onchange="applyFilters()">
+                    <option value="">Alla Lärare</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="calendar-wrapper" id="calendarWrapper" style="display: none;">
+        <div class="cal-header" id="calHeader"></div>
+        <div class="cal-body">
+            <div class="cal-timeline" id="calTimeline"></div>
+            <div class="cal-days" id="calDays"></div>
+        </div>
+    </div>
+
+    <script>
+        const PIXELS_PER_MIN = 1;
+        let allData = [];
+        let globalDays = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag'];
+        let uniqueGrades = [];
+
+        function timeToMins(t) {
+            let p = t.split(':');
+            return parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
+        }
+
+        function minsToTime(m) {
+            let h = Math.floor(m / 60);
+            let mins = m % 60;
+            return h + ':' + mins.toString().padStart(2, '0');
+        }
+
+        function parseTimeRange(timeStr) {
+            let cleaned = timeStr.trim().replace('.', ':');
+            let parts = [];
+            
+            if (cleaned.includes('-')) {
+                parts = cleaned.split('-');
+            } else {
+                let match = cleaned.match(/^(\d{1,2}:\d{2})[:](\d{1,2}:\d{2})$/);
+                if (match) {
+                    parts = [match[1], match[2]];
+                }
+            }
+            
+            if (parts.length < 2) return null;
+            
+            let start = parts[0].trim();
+            let end = parts[1].trim();
+            
+            return {
+                cleanStr: `${start}-${end}`,
+                startMins: timeToMins(start),
+                endMins: timeToMins(end)
+            };
+        }
+
+        function getSubjectColor(subject) {
+            // === KLISTRA IN DINA EGNA FÄRGER HÄR ===
+            const colors = {
+                'bgs': '#9efece', 
+                'matematik': '#74b9ff',
+                'so': '#e3d2c4', 
+                'no': '#f5d2b2', 
+                'idrott': '#d3dcee', 
+                'engelska': '#ffc7c7', 
+                'svenska': '#f5f68d', 
+                'workshop': '#81ecec',
+                'rast': '#dfe6e9',
+                'lunch': '#dfe6e9',
+                'ph-samtal': '#ef98b9',
+                'läsning': '#8658ca',
+                'slöjd': '#f2d9f1',
+                'hkk': '#c3dcf8',
+                'musik': '#cef89b',
+                'bild': '#f9d2f5'
+            };
+            // =======================================
+            return colors[subject.toLowerCase().trim()] || '#e0e0e0';
+        }
+
+        function downloadImage(format) {
+            const wrapper = document.getElementById('calendarWrapper');
+            if (wrapper.style.display === 'none') {
+                alert('Ladda upp en CSV-fil först!');
+                return;
+            }
+
+            html2canvas(wrapper, {
+                scale: 2, 
+                backgroundColor: '#ffffff'
+            }).then(canvas => {
+                const a4Width = 3508;
+                const a4Height = 2480;
+                const margin = 118; 
+                
+                const contentWidth = a4Width - (2 * margin);
+                const contentHeight = a4Height - (2 * margin);
+                
+                const scale = Math.min(contentWidth / canvas.width, contentHeight / canvas.height);
+                
+                const drawWidth = canvas.width * scale;
+                const drawHeight = canvas.height * scale;
+                
+                const offsetX = (a4Width - drawWidth) / 2;
+                const offsetY = (a4Height - drawHeight) / 2;
+                
+                const finalCanvas = document.createElement('canvas');
+                finalCanvas.width = a4Width;
+                finalCanvas.height = a4Height;
+                const ctx = finalCanvas.getContext('2d');
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, a4Width, a4Height);
+                ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, offsetX, offsetY, drawWidth, drawHeight);
+
+                const mimeType = format === 'jpeg' ? 'image/jpeg' : 'image/png';
+                const link = document.createElement('a');
+                link.download = `veckoschema_a4.${format}`;
+                link.href = finalCanvas.toDataURL(mimeType, 0.95);
+                link.click();
+            });
+        }
+
+        document.getElementById('csvFileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) { parseCSV(e.target.result); };
+            reader.readAsText(file);
+        });
+
+        function parseCSV(csvText) {
+            const rows = csvText.split('\n').map(r => r.trim()).filter(r => r.length > 0);
+            allData = [];
+            let gradeSet = new Set(), subjectSet = new Set(), teacherSet = new Set();
+
+            rows.slice(1).forEach(row => {
+                const cols = row.split(',').map(c => c.trim());
+                if (cols.length < 4) return;
+                
+                let timeInfo = parseTimeRange(cols[1]);
+                if(!timeInfo) return;
+
+                let teachers = [];
+                for (let i = 4; i < cols.length; i++) {
+                    if (cols[i]) teachers.push(cols[i]);
+                }
+
+                const item = {
+                    day: cols[0],
+                    timeStr: timeInfo.cleanStr,
+                    startMins: timeInfo.startMins,
+                    endMins: timeInfo.endMins,
+                    grade: cols[2],
+                    subject: cols[3],
+                    teachers: teachers
+                };
+                
+                allData.push(item);
+                gradeSet.add(item.grade);
+                
+                let subjLower = item.subject.toLowerCase();
+                if(subjLower !== 'rast' && subjLower !== 'lunch') {
+                    subjectSet.add(item.subject);
+                }
+                
+                teachers.forEach(t => teacherSet.add(t));
+            });
+
+            uniqueGrades = Array.from(gradeSet).sort((a,b) => parseInt(a,10) - parseInt(b,10));
+            
+            populateSelect('filterGrade', uniqueGrades, "Alla Årskurser");
+            populateSelect('filterSubject', Array.from(subjectSet).sort(), "Alla Ämnen");
+            populateSelect('filterTeacher', Array.from(teacherSet).sort(), "Alla Lärare");
+
+            applyFilters();
+        }
+
+        function populateSelect(id, items, defaultText) {
+            const sel = document.getElementById(id);
+            sel.innerHTML = `<option value="">${defaultText}</option>` + items.map(i => `<option value="${i}">${i}</option>`).join('');
+        }
+
+        function applyFilters() {
+            const fGrade = document.getElementById('filterGrade').value;
+            const fSubj = document.getElementById('filterSubject').value;
+            const fTeach = document.getElementById('filterTeacher').value;
+
+            const filtered = allData.filter(d => {
+                return (fGrade === "" || d.grade === fGrade) &&
+                       (fSubj === "" || d.subject.toLowerCase() === fSubj.toLowerCase()) &&
+                       (fTeach === "" || d.teachers.includes(fTeach));
+            });
+
+            const visibleGrades = fGrade === "" ? uniqueGrades : [fGrade];
+            calculateLayout(filtered, visibleGrades);
+        }
+
+        function calculateLayout(filteredData, visibleGrades) {
+            filteredData.forEach(d => d.merged = false);
+
+            globalDays.forEach(day => {
+                let dayLessons = filteredData.filter(d => d.day.toLowerCase() === day.toLowerCase() && visibleGrades.includes(d.grade));
+                
+                visibleGrades.forEach(grade => {
+                    let gLessons = dayLessons.filter(l => l.grade === grade);
+                    gLessons.forEach(l1 => {
+                        let overlaps = gLessons.filter(l2 => Math.max(l1.startMins, l2.startMins) < Math.min(l1.endMins, l2.endMins));
+                        l1.overlapCount = overlaps.length;
+                        overlaps.sort((a,b) => a.startMins - b.startMins || a.subject.localeCompare(b.subject));
+                        l1.overlapIndex = overlaps.indexOf(l1);
+                    });
+                });
+
+                dayLessons.forEach(lesson => {
+                    if (lesson.merged) return;
+
+                    let gIdx = visibleGrades.indexOf(lesson.grade);
+                    let colspan = 1;
+                    let allTeachers = [...lesson.teachers];
+
+                    if (lesson.overlapCount === 1) {
+                        for (let i = gIdx + 1; i < visibleGrades.length; i++) {
+                            let match = dayLessons.find(l => 
+                                l.grade === visibleGrades[i] && 
+                                l.startMins === lesson.startMins && 
+                                l.endMins === lesson.endMins && 
+                                l.subject.toLowerCase() === lesson.subject.toLowerCase() &&
+                                l.overlapCount === 1
+                            );
+
+                            if (match && !match.merged) {
+                                colspan++;
+                                match.merged = true;
+                                match.teachers.forEach(t => {
+                                    if (!allTeachers.includes(t)) allTeachers.push(t);
+                                });
+                            } else break;
+                        }
+                    }
+                    lesson.colspan = colspan;
+                    lesson.displayTeachers = allTeachers.join(' / ');
+                });
+            });
+
+            drawGrid(filteredData, visibleGrades);
+        }
+
+        function drawGrid(filteredData, visibleGrades) {
+            const wrapper = document.getElementById('calendarWrapper');
+            
+            if (filteredData.length === 0) {
+                wrapper.style.display = 'none';
+                document.getElementById('calHeader').innerHTML = '';
+                document.getElementById('calTimeline').innerHTML = '';
+                document.getElementById('calDays').innerHTML = '';
+                return;
+            }
+
+            const isSingleGrade = visibleGrades.length === 1;
+
+            if (isSingleGrade) {
+                wrapper.classList.add('single-grade-view');
+            } else {
+                wrapper.classList.remove('single-grade-view');
+            }
+
+            let minMin = 8 * 60 + 15;
+            let maxDataMin = Math.max(...filteredData.map(d => d.endMins), 17 * 60);
+            let maxMin = Math.max(17 * 60, Math.ceil(maxDataMin / 60) * 60);
+            
+            // --- FIX FÖR ATT 17:00 INTE SKA KLIPPAS ---
+            // Lägger till 15 minuters osynlig marginal i botten
+            let renderMaxMin = maxMin + 15; 
+
+            let totalMins = renderMaxMin - minMin;
+            let screenHeight = totalMins * PIXELS_PER_MIN;
+
+            let headHTML = '';
+            
+            if (isSingleGrade) {
+                headHTML += `<div class="single-grade-banner" style="border-bottom: 1px solid #000;">Åk ${visibleGrades[0]}</div>`;
+            }
+
+            headHTML += `<div class="cal-header-cols"><div class="time-corner"></div>`;
+            
+            globalDays.forEach(day => {
+                headHTML += `
+                    <div class="day-col-header">
+                        <div class="day-title" ${isSingleGrade ? 'style="border-bottom: none;"' : ''}>${day}</div>
+                        ${isSingleGrade 
+                            ? '' 
+                            : `<div class="grades-row">
+                                ${visibleGrades.map(g => `<div class="grade-title">Åk ${g}</div>`).join('')}
+                               </div>`
+                        }
+                    </div>
+                `;
+            });
+            
+            headHTML += `</div>`;
+            document.getElementById('calHeader').innerHTML = headHTML;
+
+            let timeHTML = '';
+            for(let m = minMin; m <= maxMin; m += 5) {
+                if (m === minMin) continue;
+
+                let topPct = ((m - minMin) / totalMins) * 100;
+                
+                if (m % 30 === 0) {
+                    timeHTML += `<div class="tick-line tick-30" style="top: ${topPct}%;"></div>`;
+                    timeHTML += `<div class="time-tick" style="top: ${topPct}%;">${minsToTime(m)}</div>`;
+                } else if (m % 15 === 0) {
+                    timeHTML += `<div class="tick-line tick-15" style="top: ${topPct}%;"></div>`;
+                } else {
+                    timeHTML += `<div class="tick-line tick-5" style="top: ${topPct}%;"></div>`;
+                }
+            }
+            document.getElementById('calTimeline').innerHTML = timeHTML;
+            document.getElementById('calTimeline').style.height = `${screenHeight}px`;
+
+            const showTeacher = false; 
+
+            let daysHTML = '';
+            globalDays.forEach(day => {
+                let dayLessons = filteredData.filter(d => d.day.toLowerCase() === day.toLowerCase());
+                
+                let linesHTML = '';
+                if (dayLessons.length > 0) {
+                    for(let m = minMin; m <= maxMin; m += 5) {
+                        if (m % 60 === 0) {
+                            let topPct = ((m - minMin) / totalMins) * 100;
+                            linesHTML += `<div class="hour-line" style="top: ${topPct}%;"></div>`;
+                        }
+                    }
+                    for(let i = 1; i < visibleGrades.length; i++) {
+                        linesHTML += `<div class="grade-line" style="left: ${(i / visibleGrades.length) * 100}%;"></div>`;
+                    }
+                }
+
+                let lessonsHTML = '';
+                dayLessons.forEach(lesson => {
+                    if (lesson.merged) return;
+                    let gIdx = visibleGrades.indexOf(lesson.grade);
+                    if (gIdx === -1) return;
+
+                    let baseWidthPct = 100 / visibleGrades.length;
+                    let widthPct = (baseWidthPct * lesson.colspan) / lesson.overlapCount;
+                    let leftPct = (gIdx * baseWidthPct) + (widthPct * lesson.overlapIndex);
+                    
+                    let topPct = ((lesson.startMins - minMin) / totalMins) * 100;
+                    let heightPct = ((lesson.endMins - lesson.startMins) / totalMins) * 100;
+
+                    let duration = lesson.endMins - lesson.startMins;
+                    let isExtraShort = duration < 16;
+                    let isShort = duration < 31 && !isExtraShort;
+                    
+                    let shortClass = isExtraShort ? 'extra-short-lesson' : (isShort ? 'short-lesson' : '');
+                    let isHalfWidth = lesson.overlapCount >= 2;
+                    let halfClass = isHalfWidth ? 'half-width' : '';
+
+                    let teacherHTML = (showTeacher && lesson.displayTeachers) 
+                        ? `<div class="teacher-text">${lesson.displayTeachers}</div>` 
+                        : '';
+
+                    lessonsHTML += `
+                        <div class="lesson-box ${shortClass} ${halfClass}" style="
+                            top: ${topPct}%; 
+                            left: ${leftPct}%; 
+                            width: ${widthPct}%; 
+                            height: ${heightPct}%;
+                            background-color: ${getSubjectColor(lesson.subject)};
+                        ">
+                            <div class="subject-title">${lesson.subject}</div>
+                            <div class="time-badge">${lesson.timeStr}</div>
+                            ${teacherHTML}
+                        </div>
+                    `;
+                });
+
+                daysHTML += `<div class="day-body-col">${linesHTML}${lessonsHTML}</div>`;
+            });
+            
+            document.getElementById('calDays').innerHTML = daysHTML;
+            document.getElementById('calDays').style.height = `${screenHeight}px`;
+
+            wrapper.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
