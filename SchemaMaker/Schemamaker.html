@@ -216,16 +216,16 @@
 
         /* Korta lektioner (< 31 min): 50% mindre teckenstorlek */
         .short-lesson { justify-content: center; padding: 1px; }
-        .short-lesson .subject-title { font-size: 0.3em; margin-bottom: 0; }
-        .short-lesson .time-badge { font-size: 0.27em; margin-bottom: 0; }
+        .short-lesson .subject-title { font-size: 0.2em; margin-bottom: 0; }
+        .short-lesson .time-badge { font-size: 0.17em; margin-bottom: 0; }
 
         /* Alla årskurser: 50 % teckenstorlek vid överlappning (half-width) */
         .lesson-box.half-width .subject-title { font-size: 0.3em; }
         .lesson-box.half-width .time-badge { font-size: 0.27em; }
         
         /* Halv bredd + Kort lektion = Ytterligare 50% mindre */
-        .lesson-box.half-width.short-lesson .subject-title { font-size: 0.17em; }
-        .lesson-box.half-width.short-lesson .time-badge { font-size: 0.155em; }
+        .lesson-box.half-width.short-lesson .subject-title { font-size: 0.12em; }
+        .lesson-box.half-width.short-lesson .time-badge { font-size: 0.10em; }
 
         /* Enskild årskursvy: Standardtypsnitt */
         .single-grade-view .subject-title { font-size: 0.85em; }
@@ -236,8 +236,9 @@
         .single-grade-view .short-lesson .time-badge { font-size: 0.36em; }
 
         /* Enskild årskursvy: Extra korta lektioner < 16 min (-25% av kort lektion storlek) */
-        .extra-short-lesson .subject-title { font-size: 0.30em; }
-        .extra-short-lesson .time-badge { font-size: 0.20em; }
+        .extra-short-lesson {flex-direction: row; gap: 4px; }
+        .extra-short-lesson .subject-title { font-size: 0.425em; }
+        .extra-short-lesson .time-badge { font-size: 0.36em; }
 
         /* 5. Utskriftsinställningar för PDF */
         @media print {
@@ -428,9 +429,12 @@
                 ctx.fillRect(0, 0, a4Width, a4Height);
                 ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, offsetX, offsetY, drawWidth, drawHeight);
 
+               let fileName = prompt("Skriv in önskat filnamn:", "veckoschema_a4");
+                if (!fileName) return; // Avbryter nedladdningen om du klickar på "Avbryt"
+
                 const mimeType = format === 'jpeg' ? 'image/jpeg' : 'image/png';
                 const link = document.createElement('a');
-                link.download = `veckoschema_a4.${format}`;
+                link.download = `${fileName}.${format}`;
                 link.href = finalCanvas.toDataURL(mimeType, 0.95);
                 link.click();
             });
