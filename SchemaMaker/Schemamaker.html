@@ -195,7 +195,7 @@
         }
         .subject-title { 
             font-weight: bold; 
-            font-size: 0.68em; 
+            font-size: 1em; 
             text-transform: uppercase; 
             line-height: 1.1;
             margin-bottom: 1px;
@@ -207,7 +207,7 @@
         .time-badge {
             background: transparent;
             color: #000;
-            font-size: 0.62em;
+            font-size: 1em;
             font-weight: bold;
             padding: 0;
             margin-bottom: 1px;
@@ -216,29 +216,34 @@
 
         /* Korta lektioner (< 31 min): 50% mindre teckenstorlek */
         .short-lesson { justify-content: center; padding: 1px; }
-        .short-lesson .subject-title { font-size: 0.2em; margin-bottom: 0; }
-        .short-lesson .time-badge { font-size: 0.17em; margin-bottom: 0; }
+        .short-lesson .subject-title { font-size: 0.9em; margin-bottom: 0; }
+        .short-lesson .time-badge { font-size: 0.9em; margin-bottom: 0; }
 
         /* Alla årskurser: 50 % teckenstorlek vid överlappning (half-width) */
-        .lesson-box.half-width .subject-title { font-size: 0.3em; }
-        .lesson-box.half-width .time-badge { font-size: 0.27em; }
+        .lesson-box.half-width .subject-title { font-size: 0.58em; }
+        .lesson-box.half-width .time-badge { font-size: 0.58em; }
         
         /* Halv bredd + Kort lektion = Ytterligare 50% mindre */
-        .lesson-box.half-width.short-lesson .subject-title { font-size: 0.12em; }
-        .lesson-box.half-width.short-lesson .time-badge { font-size: 0.10em; }
+        .lesson-box.half-width.short-lesson .subject-title { font-size: 0.58em; }
+        .lesson-box.half-width.short-lesson .time-badge { font-size: 0.58em; }
+
+         /* Enskild årskursvy: Halv bredd + Kort lektion = Ytterligare 50% mindre */
+        .single-grade.view .lesson-box.half-width.short-lesson .subject-title { font-size: 1em; }
+        .single-grade.view .lesson-box.half-width.short-lesson .time-badge { font-size: 1em; }
+
 
         /* Enskild årskursvy: Standardtypsnitt */
-        .single-grade-view .subject-title { font-size: 0.85em; }
-        .single-grade-view .time-badge { font-size: 0.72em; }
+        .single-grade-view .subject-title { font-size: 1em; }
+        .single-grade-view .time-badge { font-size: 1em; }
         
         /* Enskild årskursvy: Korta lektioner < 31 min (50% av standard) */
-        .single-grade-view .short-lesson .subject-title { font-size: 0.425em; }
-        .single-grade-view .short-lesson .time-badge { font-size: 0.36em; }
+        .single-grade-view .short-lesson .subject-title { font-size: 0.9em; }
+        .single-grade-view .short-lesson .time-badge { font-size: 0.9em; }
 
         /* Enskild årskursvy: Extra korta lektioner < 16 min (-25% av kort lektion storlek) */
         .extra-short-lesson {flex-direction: row; gap: 4px; }
-        .extra-short-lesson .subject-title { font-size: 0.425em; }
-        .extra-short-lesson .time-badge { font-size: 0.36em; }
+        .extra-short-lesson .subject-title { font-size: 0.7em; }
+        .extra-short-lesson .time-badge { font-size: 0.7em; }
 
         /* 5. Utskriftsinställningar för PDF */
         @media print {
@@ -329,7 +334,7 @@
     </div>
 
     <script>
-        const PIXELS_PER_MIN = 1;
+        const PIXELS_PER_MIN = 1.8;
         let allData = [];
         let globalDays = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag'];
         let uniqueGrades = [];
