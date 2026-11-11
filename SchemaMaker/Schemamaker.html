@@ -227,9 +227,39 @@
         .lesson-box.half-width.short-lesson .subject-title { font-size: 0.58em; }
         .lesson-box.half-width.short-lesson .time-badge { font-size: 0.58em; }
 
-         /* Enskild årskursvy: Halv bredd + Kort lektion = Ytterligare 50% mindre */
-        .single-grade.view .lesson-box.half-width.short-lesson .subject-title { font-size: 1em; }
-        .single-grade.view .lesson-box.half-width.short-lesson .time-badge { font-size: 1em; }
+         /* --- Single Grade View Base Styles --- */
+.single-grade-view .lesson-box {
+    /* Base styles for full-width single grade lessons */
+    padding: 2px 4px;
+}
+
+.single-grade-view .subject-title,
+.single-grade-view .time-badge {
+    font-size: 1em;
+}
+
+/* --- FIX OVERLAPS IN SINGLE GRADE VIEW --- */
+/* Target overlapping (half-width) lessons inside single grade view specifically */
+.single-grade-view .lesson-box.half-width {
+    padding: 1px 2px;
+}
+
+.single-grade-view .lesson-box.half-width .subject-title {
+    font-size: 1em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.single-grade-view .lesson-box.half-width .time-badge {
+    font-size: 1em;
+}
+
+/* Overlapping AND short (< 31 min) inside single grade view */
+.single-grade-view .lesson-box.half-width.short-lesson .subject-title,
+.single-grade-view .lesson-box.half-width.short-lesson .time-badge {
+    font-size: 0.6em;
+}
 
 
         /* Enskild årskursvy: Standardtypsnitt */
